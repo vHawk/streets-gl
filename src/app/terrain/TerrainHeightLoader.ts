@@ -97,7 +97,7 @@ export default class TerrainHeightLoader {
 
 	public constructor() {
 		this.decodingCanvas = document.createElement('canvas');
-		this.decodingCtx = this.decodingCanvas.getContext('2d');
+		this.decodingCtx = this.decodingCanvas.getContext('2d', {willReadFrequently:true});
 	}
 
 	public async getOrLoadTile(
