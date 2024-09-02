@@ -5,8 +5,9 @@ import AbstractRenderer from "~/lib/renderer/abstract-renderer/AbstractRenderer"
 import TerrainHeightLoader, {HeightLoaderTile} from "~/app/terrain/TerrainHeightLoader";
 import Utils from "~/app/Utils";
 import Config from "~/app/Config";
+import EsriElevationFetcher from "~/app/terrain/EsriElevationFetcher";
 
-export default class HeightTileSource extends TileSource<ImageBitmap> {
+export default class HeightTileSource extends TileSource<Float32Array> {
 	private texture: AbstractTexture2D = null;
 	private heightLoaderTile: HeightLoaderTile = null;
 
@@ -23,30 +24,17 @@ export default class HeightTileSource extends TileSource<ImageBitmap> {
 		}
 
 		this.heightLoaderTile = tile;
-		this.data = tile.getLevel(level).bitmap;
+		this.data = tile.getLevel(level).data;
 	}
 
 	public async load(): Promise<void> {
-		const url = HeightTileSource.getURL(this.x, this.y, this.zoom);
-		const response = await fetch(url, {
-			method: 'GET'
-		});
-
-		if (response.status !== 200) {
-			return;
-		}
-
-		const blob = await response.blob();
+		const source = await EsriElevationFetcher.fetch(this.x, this.y, this.zoom);
 
 		if (this.deleted) {
 			return;
 		}
 
-		const bitmap = await createImageBitmap(blob);
-
-		if (!this.deleted) {
-			this.data = bitmap;
-		}
+		this.data = source;
 	}
 
 	public getTexture(renderer: AbstractRenderer): AbstractTexture2D {
@@ -56,9 +44,9 @@ export default class HeightTileSource extends TileSource<ImageBitmap> {
 
 		if (!this.texture) {
 			this.texture = renderer.createTexture2D({
-				width: this.data.width,
-				height: this.data.height,
-				format: RendererTypes.TextureFormat.RGBA8Unorm,
+				width: 512,
+				height: 512,
+				format: RendererTypes.TextureFormat.R32Float,
 				mipmaps: false,
 				data: this.data
 			});
@@ -70,10 +58,6 @@ export default class HeightTileSource extends TileSource<ImageBitmap> {
 	public delete(): void {
 		this.deleted = true;
 
-		if (this.data && !this.heightLoaderTile) {
-			this.data.close();
-		}
-
 		if (this.heightLoaderTile) {
 			this.heightLoaderTile.tracker.release(this);
 		}
@@ -81,16 +65,5 @@ export default class HeightTileSource extends TileSource<ImageBitmap> {
 		if (this.texture) {
 			this.texture.delete();
 		}
-	}
-
-	private static getURL(x: number, y: number, zoom: number): string {
-		return Utils.resolveEndpointTemplate({
-			template: Config.ElevationEndpointTemplate,
-			values: {
-				x: x,
-				y: y,
-				z: zoom
-			}
-		});
 	}
 }

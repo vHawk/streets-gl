@@ -142,7 +142,6 @@ const Config = {
 	],
 	TileServerEndpoint: 'https://tiles.streets.gl',
 	SlippyEndpointTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-	ElevationEndpointTemplate: 'https://tiles.streets.gl/elevation/{z}/{x}/{y}',
 	TilesEndpointTemplate: 'https://tiles.streets.gl/vector/{z}/{x}/{y}'
 };
 

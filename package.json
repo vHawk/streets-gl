@@ -67,6 +67,8 @@
 		"dagre": "^0.8.5",
 		"dagre-d3": "^0.6.4",
 		"earcut": "^2.2.2",
+		"lerc": "^4.0.4",
+		"path-browserify": "^1.0.1",
 		"pbf": "^3.2.1",
 		"polybooljs": "^1.2.0",
 		"polylabel": "^1.1.0",
@@ -78,6 +80,7 @@
 		"recoil": "^0.7.6",
 		"simplify-js": "^1.2.4",
 		"straight-skeleton": "^2.0.1",
-		"suncalc": "^1.8.0"
+		"suncalc": "^1.8.0",
+		"url": "^0.11.4"
 	}
 }

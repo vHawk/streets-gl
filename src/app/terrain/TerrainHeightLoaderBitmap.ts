@@ -1,11 +1,9 @@
 export default class TerrainHeightLoaderBitmap {
-	public readonly bitmap: ImageBitmap;
-	private readonly data: Float32Array;
+	public readonly data: Float32Array;
 	private readonly width: number;
 	private readonly height: number;
 
-	public constructor(bitmap: ImageBitmap, data: Float32Array, width: number, height: number) {
-		this.bitmap = bitmap;
+	public constructor(data: Float32Array, width: number, height: number) {
 		this.data = data;
 		this.width = width;
 		this.height = height;
@@ -36,12 +34,6 @@ export default class TerrainHeightLoaderBitmap {
 			}
 		}
 
-		return new TerrainHeightLoaderBitmap(null, data, width, height);
-	}
-
-	public delete(): void {
-		if (this.bitmap) {
-			this.bitmap.close();
-		}
+		return new TerrainHeightLoaderBitmap(data, width, height);
 	}
 }

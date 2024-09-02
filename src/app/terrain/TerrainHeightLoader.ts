@@ -1,6 +1,7 @@
 import TerrainHeightLoaderBitmap from "~/app/terrain/TerrainHeightLoaderBitmap";
 import Utils from "~/app/Utils";
 import Config from "~/app/Config";
+import EsriElevationFetcher from "~/app/terrain/EsriElevationFetcher";
 
 type AnyObject = any;
 
@@ -30,12 +31,6 @@ export class HeightLoaderTile {
 
 	public getLevel(levelId: number): TerrainHeightLoaderBitmap {
 		return this.levels.get(levelId);
-	}
-
-	public delete(): void {
-		for (const level of this.levels.values()) {
-			level.delete();
-		}
 	}
 }
 
@@ -92,13 +87,6 @@ export default class TerrainHeightLoader {
 	private readonly maxConcurrentRequests: number = 2;
 	private readonly activeRequests: Set<Request> = new Set();
 	private readonly queue: RequestQueue = new RequestQueue();
-	private readonly decodingCanvas: HTMLCanvasElement;
-	private readonly decodingCtx: CanvasRenderingContext2D;
-
-	public constructor() {
-		this.decodingCanvas = document.createElement('canvas');
-		this.decodingCtx = this.decodingCanvas.getContext('2d', {willReadFrequently:true});
-	}
 
 	public async getOrLoadTile(
 		x: number,
@@ -169,18 +157,8 @@ export default class TerrainHeightLoader {
 		zoom: number,
 		downscaleTimes: number
 	): Promise<void> {
-		const url = TerrainHeightLoader.getURL(x, y, zoom);
-		const response = await fetch(url, {
-			method: 'GET'
-		});
-
-		if (response.status !== 200) {
-			return;
-		}
-
-		const blob = await response.blob();
-		const bitmap = await createImageBitmap(blob);
-		const decoded = this.decodeBitmap(bitmap);
+		const data = await EsriElevationFetcher.fetch(x, y, zoom);
+		const decoded = new TerrainHeightLoaderBitmap(data, 512, 512);
 
 		this.addBitmap(decoded, x, y, zoom, 0);
 
@@ -198,7 +176,6 @@ export default class TerrainHeightLoader {
 	private removeUnusedTiles(): void {
 		for (const [key, tile] of this.tiles.entries()) {
 			if (!tile.tracker.isUsed()) {
-				tile.delete();
 				this.tiles.delete(key);
 			}
 		}
@@ -242,40 +219,5 @@ export default class TerrainHeightLoader {
 		}
 
 		return tile.getLevel(level);
-	}
-
-	private decodeBitmap(bitmap: ImageBitmap): TerrainHeightLoaderBitmap {
-		this.decodingCanvas.width = bitmap.width;
-		this.decodingCanvas.height = bitmap.height;
-
-		this.decodingCtx.drawImage(bitmap, 0, 0);
-
-		const imageData = this.decodingCtx.getImageData(0, 0, bitmap.width, bitmap.height);
-		const data = new Float32Array(bitmap.width * bitmap.height);
-
-		for (let i = 0; i < data.length; i++) {
-			const r = imageData.data[i * 4];
-			const g = imageData.data[i * 4 + 1];
-			const b = imageData.data[i * 4 + 2];
-
-			data[i] = -10000 + (r * 256 * 256 + g * 256 + b) * 0.1;
-		}
-
-		return new TerrainHeightLoaderBitmap(bitmap, data, bitmap.width, bitmap.height);
-	}
-
-	private static getURL(x: number, y: number, zoom: number): string {
-		return Utils.resolveEndpointTemplate({
-			template: Config.ElevationEndpointTemplate,
-			values: {
-				x: x,
-				y: y,
-				z: zoom
-			}
-		});
-	}
-
-	private static getTileKey(x: number, y: number, zoom: number): string {
-		return `${x},${y},${zoom}`;
 	}
 }
