@@ -96,7 +96,7 @@ export default class OSMNodeQualifierFactory extends AbstractQualifierFactory<Ve
 			}];
 		}
 
-		if (tags.highway === 'bus_stop') {
+		if (tags.highway === 'bus_stop' && !(tags['public_transport'] === 'stop_position')) {
 			return [{
 				type: QualifierType.Descriptor,
 				data: {
