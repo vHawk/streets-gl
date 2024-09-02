@@ -18,6 +18,8 @@
 	},
 	"license": "MIT",
 	"devDependencies": {
+		"@jest/globals": "^29.7.0",
+		"@jest/types": "^29.6.3",
 		"@types/d3": "^7.4.0",
 		"@types/dagre": "^0.7.47",
 		"@types/dagre-d3": "^0.6.3",
