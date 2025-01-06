@@ -21,6 +21,7 @@ export default class FreeControlsNavigator extends ControlsNavigator {
 	private yawMinusKeyPressed: boolean = false;
 	private yawPlusKeyPressed: boolean = false;
 	private pointerLocked: boolean = false;
+	private bikeMode: boolean = false;
 
 	public constructor(
 		element: HTMLElement,
@@ -216,11 +217,18 @@ export default class FreeControlsNavigator extends ControlsNavigator {
 		};
 	}
 
+	public setBikeMode(bikeMode: boolean): void {
+		this.bikeMode = bikeMode;
+	}
+
 	public update(deltaTime: number): void {
 		const mat = this.camera.matrixWorld.values;
 		const forwardDir = Vec3.normalize(new Vec3(mat[8], mat[9], mat[10]));
 		const rightDir = Vec3.normalize(new Vec3(mat[0], mat[1], mat[2]));
-		const speed = this.fastMovementKeyPressed ? Config.FreeCameraSpeedFast : Config.FreeCameraSpeed;
+		const fastSpeed = this.bikeMode ? Config.BikeCameraSpeedFast : Config.FreeCameraSpeedFast;
+		const slowSpeed = this.bikeMode ? Config.BikeCameraSpeed : Config.FreeCameraSpeed;
+
+		const speed = this.fastMovementKeyPressed ? fastSpeed : slowSpeed;
 
 		let movementDelta = new Vec3();
 		if (this.forwardKeyPressed) {
@@ -242,7 +250,12 @@ export default class FreeControlsNavigator extends ControlsNavigator {
 		this.camera.position.z += movementDelta.z;
 
 		const heightmapValue = this.getHeightmapValueAtPosition(this.camera.position.x, this.camera.position.z);
-		this.camera.position.y = Math.max(this.camera.position.y, heightmapValue + Config.MinFreeCameraHeight);
+		if (this.bikeMode) {
+			this.camera.position.y = heightmapValue + Config.FreeCameraBikeHeight;
+		} else {
+			this.camera.position.y = Math.max(this.camera.position.y, heightmapValue + Config.MinFreeCameraHeight);
+		}
+		
 
 		this.camera.updateMatrix();
 

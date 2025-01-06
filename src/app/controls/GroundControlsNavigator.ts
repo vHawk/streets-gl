@@ -48,6 +48,7 @@ export default class GroundControlsNavigator extends ControlsNavigator {
 	public switchToSlippy: boolean = false;
 	private transitionYawFrom: number = 0;
 	private transitionPitchFrom: number = 0;
+	private bikeMode: boolean = false;
 
 	public constructor(
 		element: HTMLElement,
@@ -335,8 +336,13 @@ export default class GroundControlsNavigator extends ControlsNavigator {
 		}
 	}
 
+	public setBikeMode(bikeMode: boolean): void {
+		this.bikeMode = bikeMode;
+		this.updateCameraProjectionMatrix();
+	}
+
 	private updateCameraProjectionMatrix(): void {
-		this.camera.near = 10;
+		this.camera.near = this.bikeMode ? Config.BikeCameraNear : Config.CameraNear;
 		this.camera.far = 100000;
 		this.camera.updateProjectionMatrix();
 	}

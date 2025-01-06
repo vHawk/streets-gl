@@ -32,6 +32,7 @@ export enum NavigationMode {
 export default class ControlsSystem extends System {
 	private readonly element: HTMLElement;
 	public mode: NavigationMode = NavigationMode.Ground;
+	public bikeMode: boolean = false;
 	private camera: PerspectiveCamera;
 	private tick: number = 0;
 	public target: Vec3 = new Vec3();
@@ -179,7 +180,21 @@ export default class ControlsSystem extends System {
 				this.freeNavigator.enable();
 				this.freeNavigator.syncWithCamera(this.groundNavigator);
 			}
+		} else if (e.code === 'KeyB') {
+			e.preventDefault();
+
+			this.bikeMode = !this.bikeMode;
+
+			this.freeNavigator.setBikeMode(this.bikeMode);
+			this.groundNavigator.setBikeMode(this.bikeMode);
+
+			this.mode = NavigationMode.Free;
+			this.activeNavigator = this.freeNavigator;
+			this.groundNavigator.disable();
+			this.freeNavigator.enable();
+			this.freeNavigator.syncWithCamera(this.groundNavigator);
 		}
+
 	}
 
 	private mouseDownEvent(e: MouseEvent): void {
