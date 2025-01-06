@@ -2,13 +2,14 @@ import ControlsNavigator from "./ControlsNavigator";
 import Vec3 from "~/lib/math/Vec3";
 import Config from "../Config";
 import MathUtils from "~/lib/math/MathUtils";
-import {ControlsState} from "../systems/ControlsSystem";
+import ControlsSystem, {ControlsState} from "../systems/ControlsSystem";
 import PerspectiveCamera from "~/lib/core/PerspectiveCamera";
 import TerrainHeightProvider from "~/app/terrain/TerrainHeightProvider";
 
 export default class FreeControlsNavigator extends ControlsNavigator {
 	private readonly terrainHeightProvider: TerrainHeightProvider;
 	private readonly camera: PerspectiveCamera;
+	private readonly parent: ControlsSystem
 	private pitch: number = MathUtils.toRad(45);
 	private yaw: number = MathUtils.toRad(0);
 	private forwardKeyPressed: boolean = false;
@@ -21,16 +22,19 @@ export default class FreeControlsNavigator extends ControlsNavigator {
 	private yawMinusKeyPressed: boolean = false;
 	private yawPlusKeyPressed: boolean = false;
 	private pointerLocked: boolean = false;
+	private bikeMode: boolean = false;
 
 	public constructor(
 		element: HTMLElement,
 		camera: PerspectiveCamera,
-		terrainHeightProvider: TerrainHeightProvider
+		terrainHeightProvider: TerrainHeightProvider,
+		parent: ControlsSystem
 	) {
 		super(element);
 
 		this.camera = camera;
 		this.terrainHeightProvider = terrainHeightProvider;
+		this.parent = parent;
 
 		this.addEventListeners();
 	}
@@ -106,6 +110,9 @@ export default class FreeControlsNavigator extends ControlsNavigator {
 				break;
 			case 'KeyF':
 				this.pitchPlusKeyPressed = true;
+				break;
+			case 'KeyB':
+				this.parent.switchBikeMode();
 				break;
 		}
 	}
@@ -216,11 +223,18 @@ export default class FreeControlsNavigator extends ControlsNavigator {
 		};
 	}
 
+	public setBikeMode(bikeMode: boolean): void {
+		this.bikeMode = bikeMode;
+	}
+
 	public update(deltaTime: number): void {
 		const mat = this.camera.matrixWorld.values;
 		const forwardDir = Vec3.normalize(new Vec3(mat[8], mat[9], mat[10]));
 		const rightDir = Vec3.normalize(new Vec3(mat[0], mat[1], mat[2]));
-		const speed = this.fastMovementKeyPressed ? Config.FreeCameraSpeedFast : Config.FreeCameraSpeed;
+		const fastSpeed = this.bikeMode ? Config.BikeCameraSpeedFast : Config.FreeCameraSpeedFast;
+		const slowSpeed = this.bikeMode ? Config.BikeCameraSpeed : Config.FreeCameraSpeed;
+
+		const speed = this.fastMovementKeyPressed ? fastSpeed : slowSpeed;
 
 		let movementDelta = new Vec3();
 		if (this.forwardKeyPressed) {
@@ -242,7 +256,12 @@ export default class FreeControlsNavigator extends ControlsNavigator {
 		this.camera.position.z += movementDelta.z;
 
 		const heightmapValue = this.getHeightmapValueAtPosition(this.camera.position.x, this.camera.position.z);
-		this.camera.position.y = Math.max(this.camera.position.y, heightmapValue + Config.MinFreeCameraHeight);
+		if (this.bikeMode) {
+			this.camera.position.y = heightmapValue + Config.FreeCameraBikeHeight;
+		} else {
+			this.camera.position.y = Math.max(this.camera.position.y, heightmapValue + Config.MinFreeCameraHeight);
+		}
+		
 
 		this.camera.updateMatrix();
 

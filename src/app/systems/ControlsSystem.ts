@@ -32,6 +32,8 @@ export enum NavigationMode {
 export default class ControlsSystem extends System {
 	private readonly element: HTMLElement;
 	public mode: NavigationMode = NavigationMode.Ground;
+	public bikeMode: boolean = false;
+	private switchBikeModeOnUpdate: boolean = false;
 	private camera: PerspectiveCamera;
 	private tick: number = 0;
 	public target: Vec3 = new Vec3();
@@ -72,8 +74,8 @@ export default class ControlsSystem extends System {
 		const cursorStyleSystem = this.systemManager.getSystem(CursorStyleSystem);
 		const terrainHeightProvider = this.systemManager.getSystem(TerrainSystem).terrainHeightProvider;
 
-		this.groundNavigator = new GroundControlsNavigator(this.element, this.camera, cursorStyleSystem, terrainHeightProvider);
-		this.freeNavigator = new FreeControlsNavigator(this.element, this.camera, terrainHeightProvider);
+		this.groundNavigator = new GroundControlsNavigator(this.element, this.camera, cursorStyleSystem, terrainHeightProvider, this);
+		this.freeNavigator = new FreeControlsNavigator(this.element, this.camera, terrainHeightProvider, this);
 		this.slippyNavigator = new SlippyControlsNavigator(this.element, this.camera, cursorStyleSystem, terrainHeightProvider);
 
 		this.activeNavigator = this.slippyNavigator;
@@ -182,6 +184,10 @@ export default class ControlsSystem extends System {
 		}
 	}
 
+	public switchBikeMode(): void {
+		this.switchBikeModeOnUpdate = true;
+	}
+
 	private mouseDownEvent(e: MouseEvent): void {
 		e.preventDefault();
 
@@ -249,6 +255,21 @@ export default class ControlsSystem extends System {
 		}
 
 		this.activeNavigator.update(deltaTime);
+
+		if (this.switchBikeModeOnUpdate) {
+			this.switchBikeModeOnUpdate = false;
+
+			this.bikeMode = !this.bikeMode;
+
+			this.freeNavigator.setBikeMode(this.bikeMode);
+			this.groundNavigator.setBikeMode(this.bikeMode);
+	
+			this.mode = NavigationMode.Free;
+			this.activeNavigator = this.freeNavigator;
+			this.groundNavigator.disable();
+			this.freeNavigator.enable();
+			this.freeNavigator.syncWithCamera(this.groundNavigator);
+		}
 
 		if (this.groundNavigator.switchToSlippy) {
 			this.groundNavigator.switchToSlippy = false;
