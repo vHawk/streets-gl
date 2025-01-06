@@ -30,6 +30,9 @@ const KeysConfig: {keys: JSX.Element; desc: string}[] = [
 		keys: <Key text='Tab'/>,
 		desc: 'Toggle between ground camera mode (default) and free camera mode'
 	}, {
+		keys: <Key text='B'/>,
+		desc: 'Toggle between bike and free camera mode'
+	}, {
 		keys: <><Key text='Ctrl'/> + <Key text='P'/></>,
 		desc: 'Purge all loaded tiles'
 	}, {
