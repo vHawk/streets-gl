@@ -62,7 +62,7 @@ module.exports = (env, argv) => ([{
 		}),
 		new DefinePlugin({
 			'process.env': JSON.stringify(
-				isProduction
+				argv.mode === 'production'
 						? process.env // Use system environment variables in production
 						: dotenv.config().parsed // Use .env variables in development
 		),
