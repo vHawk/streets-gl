@@ -1,3 +1,4 @@
+const dotenv = require('dotenv');
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
@@ -11,6 +12,12 @@ const {DefinePlugin} = require("webpack");
 const COMMIT_SHA = childProcess.execSync('git rev-parse HEAD').toString().trim();
 const COMMIT_BRANCH = childProcess.execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
 const VERSION = require('./package.json').version;
+
+const isProduction = process.env.NODE_ENV === 'production'
+
+if (!isProduction) {
+	dotenv.config();
+}
 
 module.exports = (env, argv) => ([{
 	entry: './src/app/App.ts',
@@ -54,6 +61,11 @@ module.exports = (env, argv) => ([{
 			extensions: ['ts', 'tsx']
 		}),
 		new DefinePlugin({
+			'process.env': JSON.stringify(
+				argv.mode === 'production'
+						? process.env // Use system environment variables in production
+						: dotenv.config().parsed // Use .env variables in development
+		),
 			COMMIT_SHA: JSON.stringify(COMMIT_SHA),
 			COMMIT_BRANCH: JSON.stringify(COMMIT_BRANCH),
 			VERSION: JSON.stringify(VERSION)
