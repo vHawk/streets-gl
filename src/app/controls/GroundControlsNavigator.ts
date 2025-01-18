@@ -4,7 +4,7 @@ import Vec3 from "~/lib/math/Vec3";
 import Config from "../Config";
 import MathUtils from "~/lib/math/MathUtils";
 import CursorStyleSystem from "../systems/CursorStyleSystem";
-import {ControlsState} from "../systems/ControlsSystem";
+import ControlsSystem, {ControlsState} from "../systems/ControlsSystem";
 import PerspectiveCamera from "~/lib/core/PerspectiveCamera";
 import TerrainHeightProvider from "~/app/terrain/TerrainHeightProvider";
 import FreeControlsNavigator from "~/app/controls/FreeControlsNavigator";
@@ -21,6 +21,7 @@ export default class GroundControlsNavigator extends ControlsNavigator {
 	private readonly camera: PerspectiveCamera;
 	private readonly cursorStyleSystem: CursorStyleSystem;
 	private readonly terrainHeightProvider: TerrainHeightProvider;
+	private readonly parent: ControlsSystem;
 	public target: Vec3 = new Vec3();
 	private direction: Vec3 = new Vec3();
 	public distance: number = 0;
@@ -48,18 +49,21 @@ export default class GroundControlsNavigator extends ControlsNavigator {
 	public switchToSlippy: boolean = false;
 	private transitionYawFrom: number = 0;
 	private transitionPitchFrom: number = 0;
+	private bikeMode: boolean = false;
 
 	public constructor(
 		element: HTMLElement,
 		camera: PerspectiveCamera,
 		cursorStyleSystem: CursorStyleSystem,
-		terrainHeightProvider: TerrainHeightProvider
+		terrainHeightProvider: TerrainHeightProvider,
+		parent: ControlsSystem
 	) {
 		super(element);
 
 		this.camera = camera;
 		this.cursorStyleSystem = cursorStyleSystem;
 		this.terrainHeightProvider = terrainHeightProvider;
+		this.parent = parent;
 
 		this.addEventListeners();
 	}
@@ -207,6 +211,9 @@ export default class GroundControlsNavigator extends ControlsNavigator {
 			case 'KeyF':
 				this.pitchMinusKeyPressed = true;
 				break;
+			case 'KeyB':
+				this.parent.switchBikeMode();
+				break;
 		}
 	}
 
@@ -335,8 +342,13 @@ export default class GroundControlsNavigator extends ControlsNavigator {
 		}
 	}
 
+	public setBikeMode(bikeMode: boolean): void {
+		this.bikeMode = bikeMode;
+		this.updateCameraProjectionMatrix();
+	}
+
 	private updateCameraProjectionMatrix(): void {
-		this.camera.near = 10;
+		this.camera.near = this.bikeMode ? Config.BikeCameraNear : Config.CameraNear;
 		this.camera.far = 100000;
 		this.camera.updateProjectionMatrix();
 	}
